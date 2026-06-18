@@ -1,6 +1,6 @@
 # OmniFees Web
 
-Dashboard for tracking and claiming Omniston referral fees.
+Dashboard for tracking and syncing Omniston referral fees.
 
 ## Setup
 

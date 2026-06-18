@@ -31,6 +31,17 @@ export interface ReferralSummary {
   persisted?: boolean;
 }
 
+export interface ReferralSnapshot extends ReferralSummary {
+  _id?: string;
+  createdAt: string;
+}
+
+export interface ReferralSnapshotsResponse {
+  wallet: string;
+  snapshots: ReferralSnapshot[];
+  note?: string;
+}
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
@@ -42,7 +53,8 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
     }
   });
 
-  const payload = (await response.json()) as unknown;
+  const text = await response.text();
+  const payload = text ? (JSON.parse(text) as unknown) : null;
 
   if (!response.ok) {
     const message = payload && typeof payload === "object" && "error" in payload ? String(payload.error) : "Request failed";
@@ -58,5 +70,7 @@ export const syncReferralSummary = (wallet: string) =>
   request<ReferralSummary>(`/api/referrers/${encodeURIComponent(wallet)}/sync`, {
     method: "POST"
   });
+
+export const getReferralSnapshots = (wallet: string) => request<ReferralSnapshotsResponse>(`/api/referrers/${encodeURIComponent(wallet)}/snapshots`);
 
 export const getApiBaseUrl = () => apiBaseUrl;

@@ -2,7 +2,7 @@
   "name": "omnifees-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Dashboard for tracking and claiming Omniston referral fees.",
+  "description": "Dashboard for tracking and syncing Omniston referral fees.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

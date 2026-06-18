@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "OmniFees",
-  description: "Dashboard for tracking and claiming Omniston referral fees."
+  description: "Dashboard for tracking and syncing Omniston referral fees."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

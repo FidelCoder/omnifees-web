@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Copy, Database, ExternalLink, Loader2, RefreshCw, Search, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Clock3, Copy, Database, ExternalLink, History, Loader2, RefreshCw, Search, TriangleAlert } from "lucide-react";
 import { useMemo, useState } from "react";
-import { getApiBaseUrl, getReferralSummary, syncReferralSummary, type ReferralSummary } from "../lib/api";
+import { getApiBaseUrl, getReferralSnapshots, getReferralSummary, syncReferralSummary, type ReferralSnapshot, type ReferralSummary } from "../lib/api";
 
 const statusClass = {
   available: "bg-emerald-50 text-emerald-700 ring-emerald-200",
@@ -25,12 +25,25 @@ const shorten = (value?: string) => {
   return `${value.slice(0, 8)}...${value.slice(-6)}`;
 };
 
+const formatDate = (value?: string) => {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
+};
+
 const exampleWallet = "EQCXSs2xZ2dhk9TAxzGzXra2EbG_S2SqyN8Tfi6fJ82EYiVj";
 
 export function ReferralLookup() {
   const [wallet, setWallet] = useState("");
   const [summary, setSummary] = useState<ReferralSummary | null>(null);
-  const [loading, setLoading] = useState<"lookup" | "sync" | null>(null);
+  const [snapshots, setSnapshots] = useState<ReferralSnapshot[]>([]);
+  const [snapshotNote, setSnapshotNote] = useState("");
+  const [loading, setLoading] = useState<"lookup" | "sync" | "history" | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -38,6 +51,12 @@ export function ReferralLookup() {
     const target = wallet.trim() || exampleWallet;
     return `curl ${getApiBaseUrl()}/api/referrers/${encodeURIComponent(target)}/summary`;
   }, [wallet]);
+
+  const loadSnapshots = async (target: string) => {
+    const response = await getReferralSnapshots(target);
+    setSnapshots(response.snapshots);
+    setSnapshotNote(response.note ?? "");
+  };
 
   const lookup = async () => {
     const target = wallet.trim();
@@ -51,6 +70,7 @@ export function ReferralLookup() {
 
     try {
       setSummary(await getReferralSummary(target));
+      await loadSnapshots(target);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Lookup failed.");
     } finally {
@@ -70,8 +90,28 @@ export function ReferralLookup() {
 
     try {
       setSummary(await syncReferralSummary(target));
+      await loadSnapshots(target);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Sync failed.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const refreshHistory = async () => {
+    const target = wallet.trim();
+    if (!target) {
+      setError("Enter a TON referrer wallet.");
+      return;
+    }
+
+    setLoading("history");
+    setError("");
+
+    try {
+      await loadSnapshots(target);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "History failed.");
     } finally {
       setLoading(null);
     }
@@ -158,6 +198,48 @@ export function ReferralLookup() {
           <div className="rounded-lg border border-line bg-white p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Claimable</p>
             <p className="mt-2 text-3xl font-semibold text-ink">{summary?.totals.claimableVaults ?? "-"}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-lg border border-line bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-ink">Snapshot history</p>
+              <p className="mt-1 text-xs text-stone-500">Latest 20 Mongo sync results</p>
+            </div>
+            <button
+              type="button"
+              onClick={refreshHistory}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-white text-ink transition hover:border-mint hover:text-mint disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={loading !== null}
+              aria-label="Refresh history"
+              title="Refresh history"
+            >
+              {loading === "history" ? <Loader2 className="h-4 w-4 animate-spin" /> : <History className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className="mt-3 space-y-2">
+            {snapshots.length ? (
+              snapshots.slice(0, 5).map((snapshot) => (
+                <button
+                  type="button"
+                  key={snapshot._id ?? snapshot.createdAt}
+                  onClick={() => setSummary(snapshot)}
+                  className="grid w-full grid-cols-[1fr_auto] gap-3 rounded-lg border border-line bg-paper p-3 text-left transition hover:border-mint"
+                >
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2 text-sm font-medium text-ink">
+                      <Clock3 className="h-4 w-4 shrink-0 text-mint" />
+                      {formatDate(snapshot.createdAt)}
+                    </span>
+                    <span className="mt-1 block truncate text-xs text-stone-500">{shorten(snapshot.wallet)}</span>
+                  </span>
+                  <span className="text-right text-sm font-semibold text-ink">{snapshot.totals.vaultCount}</span>
+                </button>
+              ))
+            ) : (
+              <p className="rounded-lg border border-line bg-paper p-3 text-sm text-stone-500">{snapshotNote || "Synced snapshots appear here."}</p>
+            )}
           </div>
         </div>
       </div>
