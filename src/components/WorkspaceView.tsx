@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, RotateCw, Copy, Check, Info, ArrowUpRight, Layers, Database, Compass, AlertCircle } from "lucide-react";
+import { Search, RotateCw, Copy, Check, Info, ArrowUpRight, Layers, Database, Compass, AlertCircle, CheckCircle2 } from "lucide-react";
 import { getApiBaseUrl, type ReferralSnapshot, type ReferralSummary } from "../../lib/api";
 
 interface WorkspaceViewProps {
@@ -10,6 +10,7 @@ interface WorkspaceViewProps {
   snapshotNote: string;
   backendAction: "lookup" | "sync" | "history" | null;
   backendError: string;
+  backendNotice: string;
   onLookup: (wallet: string) => Promise<void>;
   onSync: (wallet: string) => Promise<void>;
   onRefreshHistory: (wallet: string) => Promise<void>;
@@ -36,6 +37,7 @@ export default function WorkspaceView({
   snapshotNote,
   backendAction,
   backendError,
+  backendNotice,
   onLookup,
   onSync,
   onRefreshHistory
@@ -137,6 +139,13 @@ export default function WorkspaceView({
               </div>
             ) : null}
 
+            {backendNotice ? (
+              <div className="mt-5 p-3 bg-emerald-glow/10 border border-emerald-glow/20 rounded-lg flex items-start gap-2.5 text-xs text-on-surface">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-glow" />
+                <span>{backendNotice}</span>
+              </div>
+            ) : null}
+
             <div className="mt-6 pt-4 border-t border-surface-variant/30 space-y-2">
               <span className="block font-mono text-[9px] text-on-surface-variant/60 uppercase tracking-widest pl-1">API Curl endpoint generator</span>
               <div className="bg-[#0B0F1A] border border-surface-variant/60 rounded-lg p-3 relative font-mono text-[11px]">
@@ -174,7 +183,7 @@ export default function WorkspaceView({
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-mono font-bold text-on-surface tracking-tight">{summary?.totals.claimableVaults ?? "-"}</span>
-                <span className="text-xs font-mono text-on-surface-variant ml-1">{summary ? "vault signals" : "run lookup"}</span>
+                <span className="text-xs font-mono text-on-surface-variant ml-1">{summary ? "live lookup complete" : "run lookup"}</span>
               </div>
             </div>
           </div>

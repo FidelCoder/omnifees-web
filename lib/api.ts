@@ -29,6 +29,7 @@ export interface ReferralSummary {
   }>;
   notes: string[];
   persisted?: boolean;
+  persistenceError?: string;
 }
 
 export interface ReferralSnapshot extends ReferralSummary {

@@ -159,7 +159,7 @@ export default function VaultsView({ summary, targetWallet }: VaultsViewProps) {
             })
           ) : (
             <div className="col-span-full text-center py-12 text-on-surface-variant/50 font-sans border border-dashed border-surface-variant/30 rounded-xl bg-[#0B0F1A]/20">
-              No DEX v2 fee vaults returned for this referrer.
+              Lookup completed successfully, but STON.fi returned no DEX v2 fee vaults for this referrer. Try a wallet that has actually earned STON.fi DEX v2 referral fees.
             </div>
           )}
         </div>

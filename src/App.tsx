@@ -36,6 +36,7 @@ export default function App() {
   const [snapshotNote, setSnapshotNote] = useState("");
   const [backendAction, setBackendAction] = useState<BackendAction>(null);
   const [backendError, setBackendError] = useState("");
+  const [backendNotice, setBackendNotice] = useState("");
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const [walletState, setWalletState] = useState<WalletState>({
@@ -50,6 +51,7 @@ export default function App() {
     const response = await getReferralSnapshots(wallet);
     setSnapshots(response.snapshots);
     setSnapshotNote(response.note ?? "");
+    return response;
   };
 
   const runLookup = async (wallet: string) => {
@@ -61,12 +63,26 @@ export default function App() {
 
     setBackendAction("lookup");
     setBackendError("");
+    setBackendNotice("");
 
     try {
       const nextSummary = await getReferralSummary(trimmed);
       setSummary(nextSummary);
       setTargetWallet(nextSummary.wallet);
-      await loadSnapshots(nextSummary.wallet);
+      try {
+        const history = await loadSnapshots(nextSummary.wallet);
+        setBackendNotice(
+          nextSummary.totals.vaultCount > 0
+            ? `Lookup complete. Loaded ${nextSummary.totals.vaultCount} fee vaults.`
+            : `Lookup complete. STON.fi returned 0 fee vaults for this wallet.${history.note ? " Snapshot store warning: " + history.note : ""}`
+        );
+      } catch (historyError) {
+        setSnapshots([]);
+        setSnapshotNote("Snapshot history could not be loaded.");
+        setBackendNotice(
+          `Lookup complete. STON.fi returned ${nextSummary.totals.vaultCount} fee vaults. Snapshot history could not be loaded: ${historyError instanceof Error ? historyError.message : "unknown error"}`
+        );
+      }
     } catch (error) {
       setBackendError(error instanceof Error ? error.message : "Lookup failed.");
     } finally {
@@ -83,12 +99,27 @@ export default function App() {
 
     setBackendAction("sync");
     setBackendError("");
+    setBackendNotice("");
 
     try {
       const nextSummary = await syncReferralSummary(trimmed);
       setSummary(nextSummary);
       setTargetWallet(nextSummary.wallet);
-      await loadSnapshots(nextSummary.wallet);
+      try {
+        const history = await loadSnapshots(nextSummary.wallet);
+        const persistenceMessage = nextSummary.persisted
+          ? "Snapshot saved."
+          : `Snapshot was not saved.${nextSummary.persistenceError ? " " + nextSummary.persistenceError : ""}`;
+        setBackendNotice(
+          `Sync complete. STON.fi returned ${nextSummary.totals.vaultCount} fee vaults. ${persistenceMessage}${history.note ? " Snapshot store warning: " + history.note : ""}`
+        );
+      } catch (historyError) {
+        setSnapshots([]);
+        setSnapshotNote("Snapshot history could not be loaded.");
+        setBackendNotice(
+          `Sync complete. STON.fi returned ${nextSummary.totals.vaultCount} fee vaults. Snapshot history could not be loaded: ${historyError instanceof Error ? historyError.message : "unknown error"}`
+        );
+      }
     } catch (error) {
       setBackendError(error instanceof Error ? error.message : "Sync failed.");
     } finally {
@@ -105,9 +136,11 @@ export default function App() {
 
     setBackendAction("history");
     setBackendError("");
+    setBackendNotice("");
 
     try {
-      await loadSnapshots(trimmed);
+      const history = await loadSnapshots(trimmed);
+      setBackendNotice(history.note ? `History checked. ${history.note}` : `History refreshed. Found ${history.snapshots.length} snapshots.`);
     } catch (error) {
       setBackendError(error instanceof Error ? error.message : "History refresh failed.");
     } finally {
@@ -190,6 +223,7 @@ export default function App() {
               snapshotNote={snapshotNote}
               backendAction={backendAction}
               backendError={backendError}
+              backendNotice={backendNotice}
               onLookup={runLookup}
               onSync={runSync}
               onRefreshHistory={refreshHistory}
