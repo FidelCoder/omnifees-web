@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTonAddress, useTonConnectModal, useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
 import Sidebar from "./components/Sidebar";
@@ -23,6 +24,11 @@ const exampleWallet = "EQCXSs2xZ2dhk9TAxzGzXra2EbG_S2SqyN8Tfi6fJ82EYiVj";
 type BackendAction = "lookup" | "sync" | "history" | null;
 
 export default function App() {
+  const [tonConnectUI] = useTonConnectUI();
+  const tonWallet = useTonWallet();
+  const connectedAddress = useTonAddress();
+  const walletModal = useTonConnectModal();
+
   const [activeTab, setActiveTab] = useState<string>("workspace");
   const [targetWallet, setTargetWallet] = useState(exampleWallet);
   const [summary, setSummary] = useState<ReferralSummary | null>(null);
@@ -60,13 +66,6 @@ export default function App() {
       const nextSummary = await getReferralSummary(trimmed);
       setSummary(nextSummary);
       setTargetWallet(nextSummary.wallet);
-      setWalletState({
-        connected: true,
-        address: nextSummary.wallet,
-        name: "Referrer wallet",
-        balanceTON: 0,
-        balanceUSDC: 0
-      });
       await loadSnapshots(nextSummary.wallet);
     } catch (error) {
       setBackendError(error instanceof Error ? error.message : "Lookup failed.");
@@ -89,13 +88,6 @@ export default function App() {
       const nextSummary = await syncReferralSummary(trimmed);
       setSummary(nextSummary);
       setTargetWallet(nextSummary.wallet);
-      setWalletState({
-        connected: true,
-        address: nextSummary.wallet,
-        name: "Referrer wallet",
-        balanceTON: 0,
-        balanceUSDC: 0
-      });
       await loadSnapshots(nextSummary.wallet);
     } catch (error) {
       setBackendError(error instanceof Error ? error.message : "Sync failed.");
@@ -123,7 +115,34 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (!connectedAddress) {
+      setWalletState({
+        connected: false,
+        address: null,
+        name: null,
+        balanceTON: 0,
+        balanceUSDC: 0
+      });
+      return;
+    }
+
+    setWalletState({
+      connected: true,
+      address: connectedAddress,
+      name: tonWallet?.device.appName ?? "TON wallet",
+      balanceTON: 0,
+      balanceUSDC: 0
+    });
+    setTargetWallet(connectedAddress);
+  }, [connectedAddress, tonWallet?.device.appName]);
+
+  const handleConnectWallet = () => {
+    walletModal.open();
+  };
+
   const handleDisconnectWallet = () => {
+    void tonConnectUI.disconnect();
     setWalletState({
       connected: false,
       address: null,
@@ -154,7 +173,7 @@ export default function App() {
         <Header
           activeTab={activeTab}
           walletState={walletState}
-          onConnectClick={() => handleTabChange("workspace")}
+          onConnectClick={handleConnectWallet}
           onDisconnectClick={handleDisconnectWallet}
         />
 

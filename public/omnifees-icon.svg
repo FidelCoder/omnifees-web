@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="OmniFees">
+  <rect width="512" height="512" rx="112" fill="#020617"/>
+  <circle cx="206" cy="206" r="102" fill="none" stroke="#00ffa3" stroke-width="36"/>
+  <circle cx="314" cy="306" r="102" fill="none" stroke="#10b981" stroke-width="36"/>
+  <path d="M194 154h30v101h-30zM328 246l37 37-94 94-37-37z" fill="#00ffa3"/>
+</svg>

@@ -58,7 +58,7 @@ export default function Header({ activeTab, walletState, onConnectClick, onDisco
           <button
             onClick={onDisconnectClick}
             className="bg-emerald-glow/5 border border-emerald-glow/20 text-on-surface hover:text-red-400 hover:border-red-500/30 px-3.5 py-1.5 rounded-lg font-mono text-[11px] font-medium transition-all flex items-center gap-1.5 group cursor-pointer"
-            title="Clear loaded referrer wallet"
+            title="Disconnect wallet"
           >
             <Wallet className="w-3.5 h-3.5 text-emerald-glow group-hover:text-red-400" />
             <span>{shorten(walletState.address)}</span>
@@ -68,7 +68,7 @@ export default function Header({ activeTab, walletState, onConnectClick, onDisco
             onClick={onConnectClick}
             className="bg-emerald-glow text-[#002111] font-mono text-[11px] font-bold px-4 py-2 rounded-lg hover:bg-[#00ffa3] hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,255,163,0.35)] cursor-pointer"
           >
-            ENTER WALLET
+            CONNECT WALLET
           </button>
         )}
 
